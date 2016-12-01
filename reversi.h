@@ -6,16 +6,20 @@
 class Reversi {
   private:
     int board[8][8];
+    int player;
     std::vector<std::pair<int, int> > dirs;
   public:
     Reversi();
     void resetBoard();
     bool isOnBoard(int x, int y);
-    std::vector<std::pair<int, int> > piecesToFlip(int color, int xstart, int ystart);
-    bool isValidMove(int color, int xstart, int ystart);
-    std::vector<std::pair<int, int> > getValidMoves(int color);
-    bool makeMove(int color, int xstart, int ystart);
-    int getScoreOfBlack();
+    std::vector<std::pair<int, int> > piecesToFlip(int xstart, int ystart);
+    bool isValidMove(int xstart, int ystart);
+    std::vector<std::pair<int, int> > getValidMoves();
+    bool makeMove(int xstart, int ystart);
+    int getScore(int color);
+    void turnOver() {player = -player;};
+    void setPlayer(int color) {player = color;};
+    void printBoard();
 };
 
 #endif

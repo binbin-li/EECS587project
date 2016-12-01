@@ -1,9 +1,11 @@
 #include "reversi.h"
 #include <vector>
+#include <iostream>
 
 Reversi::Reversi()
 {
   resetBoard();
+  player = -1;
   for (int i = -1; i <= 1; ++i) {
     for (int j = -1; j <= 1; ++j) {
       if (i == 0 && j == 0) continue;
@@ -31,14 +33,14 @@ bool Reversi::isOnBoard(int x, int y)
   return x >= 0 && x <= 7 && y >= 0 && y <= 7;
 }
 
-std::vector<std::pair<int, int> > Reversi::piecesToFlip(int color, int xstart, int ystart)
+std::vector<std::pair<int, int> > Reversi::piecesToFlip(int xstart, int ystart)
 {
   std::vector<std::pair<int, int> > tilesToFlip;
   if (board[xstart][ystart] != 0 || !isOnBoard(xstart, ystart)) {
     return tilesToFlip;
   }
-  board[xstart][ystart] = color;
-  int oppositeColor = -color, x, y, xdir, ydir;
+  board[xstart][ystart] = player;
+  int oppositeColor = -player, x, y, xdir, ydir;
 
   // Find all tiles to be flipped
   for (int i = 0; i < dirs.size(); ++i) {
@@ -47,6 +49,8 @@ std::vector<std::pair<int, int> > Reversi::piecesToFlip(int color, int xstart, i
     y = ystart;
     xdir = dir.first;
     ydir = dir.second;
+    x += xdir;
+    y += ydir;
     if (isOnBoard(x, y) && board[x][y] == oppositeColor) {
       x += xdir;
       y += ydir;
@@ -63,7 +67,7 @@ std::vector<std::pair<int, int> > Reversi::piecesToFlip(int color, int xstart, i
       if (!isOnBoard(x, y)) {
         continue;
       }
-      if (board[x][y] == color) {
+      if (board[x][y] == player) {
         while(1) {
           x -= xdir;
           y -= ydir;
@@ -80,19 +84,19 @@ std::vector<std::pair<int, int> > Reversi::piecesToFlip(int color, int xstart, i
   return tilesToFlip;
 }
 
-bool Reversi::isValidMove(int color, int xstart, int ystart)
+bool Reversi::isValidMove(int xstart, int ystart)
 {
   std::vector<std::pair<int, int> > tilesToFlip;
-  tilesToFlip = piecesToFlip(color, xstart, ystart);
+  tilesToFlip = piecesToFlip(xstart, ystart);
   return !tilesToFlip.empty();
 }
 
-std::vector<std::pair<int, int> > Reversi::getValidMoves(int color)
+std::vector<std::pair<int, int> > Reversi::getValidMoves()
 {
   std::vector<std::pair<int, int> > validMoves;
   for (int i = 0; i < 8; ++i) {
     for (int j = 0; j < 8; ++j) {
-      if (isValidMove(color, i, j)) {
+      if (isValidMove(i, j)) {
         validMoves.push_back(std::make_pair(i, j));
       }
     }
@@ -100,33 +104,41 @@ std::vector<std::pair<int, int> > Reversi::getValidMoves(int color)
   return validMoves;
 }
 
-bool Reversi::makeMove(int color, int xstart, int ystart)
+bool Reversi::makeMove(int xstart, int ystart)
 {
   std::vector<std::pair<int, int> > tilesToFlip;
-  tilesToFlip = piecesToFlip(color, xstart, ystart);
+  tilesToFlip = piecesToFlip(xstart, ystart);
   if (tilesToFlip.empty()) {
     return false;
   }
-  board[xstart][ystart] = color;
+  board[xstart][ystart] = player;
   for (int i = 0; i < tilesToFlip.size(); ++i) {
     std::pair<int, int> pos = tilesToFlip[i];
-    board[pos.first][pos.second] = color;
+    board[pos.first][pos.second] = player;
   }
   return true;
 }
 
-int Reversi::getScoreOfBlack()
-{
+int Reversi::getScore(int color) {
   int score = 0;
   for (int i = 0; i < 8; ++i) {
     for (int j = 0; j < 8; ++j) {
-      if (board[i][j] == 1) {
-        score--;
-      }
-      if (board[i][j] == -1) {
+      if (board[i][j] == color) {
         score++;
+      }
+      else if (board[i][j] == -color) {
+        score--;
       }
     }
   }
   return score;
+}
+
+void Reversi::printBoard() {
+  for (int i = 0; i < 8; ++i) {
+    for (int j = 0; j < 8; ++j) {
+      std::cout << board[i][j] << '\t';
+    }
+    std::cout << "\n";
+  }
 }

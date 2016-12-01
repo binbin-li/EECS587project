@@ -1,6 +1,6 @@
 #!/bin/bash
 
-g++ -c piece.cpp
+g++ -c reversi.cpp
 g++ -c main.cpp
-g++ -o main piece.o main.o
+g++ -o main reversi.o main.o
 ./main
