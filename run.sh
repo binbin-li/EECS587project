@@ -2,5 +2,6 @@
 
 g++ -c reversi.cpp
 g++ -c main.cpp
-g++ -o main reversi.o main.o
+g++ -c treeNode.cpp
+g++ -o main reversi.o treeNode.o main.o
 ./main

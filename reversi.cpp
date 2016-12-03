@@ -141,4 +141,5 @@ void Reversi::printBoard() {
     }
     std::cout << "\n";
   }
+  std::cout << "\n";
 }

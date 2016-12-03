@@ -17,6 +17,7 @@ class Reversi {
     std::vector<std::pair<int, int> > getValidMoves();
     bool makeMove(int xstart, int ystart);
     int getScore(int color);
+    int getPlayer() {return player;};
     void turnOver() {player = -player;};
     void setPlayer(int color) {player = color;};
     void printBoard();
