@@ -10,7 +10,6 @@ using namespace std;
 
 double score(double a, double b, double c);
 pair<int, int> UCT(Reversi board);
-double simulate(Reversi board, int player);
 int MC(Reversi board, int player);
 
 int main() {
@@ -27,42 +26,25 @@ int main() {
   return 0;
 }
 
-
-double score(double a, double b, double c) {
-  double val = 1;
-  return (a/b) + sqrt(2 * log(c) / b) * 2 * val;
-}
-
 pair<int, int> UCT(Reversi board) {
-  vector<pair<int, int> > result;
+  pair<int, int> result;
   clock_t startTime;
   startTime = clock();
-  TreeNode *root = new TreeNode(board, 0, -1, NULL);
+  TreeNode *root = new TreeNode(board, 0, NULL);
   int color = board.getPlayer();
-  for (int i = 0; i < 2000; ++i) {
-    TreeNode *nextState = root->treePolicy(color);
-    int reward = nextState->defaultPolicy();
+  for (int i = 0; i < 1000; ++i) {
+    TreeNode *nextState = root->treePolicy();
+    double reward = nextState->defaultPolicy();
     nextState->update(reward);
+    // nextState->printBoard();
+    // root->printParameter();
   }
-  return root->bestMove(color);
+  return root->bestMove();
   /*
   while (clock() - startTime < CLOCKS_PER_SEC) {
 
   }
   */
-}
-
-double simulate(Reversi board, int player) {
-  board.setPlayer(player);
-  while (true) {
-    vector<pair<int, int> > nextMoves = board.getValidMoves();
-    if (nextMoves.empty()) break;
-    int nextMoveIdx = (rand() % nextMoves.size());
-    pair<int, int> nextMove = nextMoves[nextMoveIdx];
-    board.makeMove(nextMove.first, nextMove.second);
-    board.turnOver();
-  }
-  return (board.getScore(player) > 0) ? 1.0 : 0.0;
 }
 
 int MC(Reversi board, int player) {
