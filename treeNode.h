@@ -27,14 +27,11 @@ class TreeNode {
     void makeMove(int x, int y) {this->board.makeMove(x, y);};
     void printBoard() {this->board.printBoard();};
     void printParameter();
-    /*
-    void updateValue(double value);
-    TreeNode* descendByUCB();
-    void TreeNode::playOneSequence();
-    */
     std::vector<std::pair<int, int> > getValidMoves() {
       return this->board.getValidMoves();
     };
+    ~TreeNode();
+    void deleteTree();
 };
 
 #endif

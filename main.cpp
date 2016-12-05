@@ -31,25 +31,30 @@ pair<int, int> UCT(Reversi board) {
   clock_t startTime;
   startTime = clock();
   TreeNode *root = new TreeNode(board, 0, NULL);
-  int color = board.getPlayer();
-  for (int i = 0; i < 1000; ++i) {
+  /*
+  for (int i = 0; i < 4000; ++i) {
     TreeNode *nextState = root->treePolicy();
     double reward = nextState->defaultPolicy();
     nextState->update(reward);
-    // nextState->printBoard();
-    // root->printParameter();
-  }
-  return root->bestMove();
-  /*
-  while (clock() - startTime < CLOCKS_PER_SEC) {
-
   }
   */
+  int i = 0;
+  while (clock() - startTime < CLOCKS_PER_SEC) {
+    ++i;
+    TreeNode *nextState = root->treePolicy();
+    double reward = nextState->defaultPolicy();
+    nextState->update(reward);
+  }
+  result = root->bestMove();
+  root->deleteTree();
+  return result;
 }
 
 int MC(Reversi board, int player) {
   board.setPlayer(player);
   pair<int, int> move;
+  //board.setBoard();
+  //board.printBoard();
   while (true) {
     vector<pair<int, int> > nextMoves = board.getValidMoves();
     if (nextMoves.empty()) break;

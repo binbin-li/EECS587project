@@ -143,3 +143,18 @@ void Reversi::printBoard() {
   }
   std::cout << "\n";
 }
+
+void Reversi::setBoard() {
+  board[2][3] = -1;
+  board[2][4] = 1;
+  board[3][3] = -1;
+  board[3][4] = 1;
+  board[4][5] = 1;
+  board[4][3] = -1;
+  board[4][4] = -1;
+  board[5][5] = -1;
+  board[5][6] = 1;
+  board[6][5] = -1;
+  board[6][6] = -1;
+  board[7][7] = -1;
+}

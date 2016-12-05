@@ -20,6 +20,7 @@ class Reversi {
     int getPlayer() {return player;};
     void turnOver() {player = -player;};
     void setPlayer(int color) {player = color;};
+    void setBoard();
     void printBoard();
 };
 

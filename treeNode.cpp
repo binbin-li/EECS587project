@@ -96,7 +96,7 @@ std::pair<int, int> TreeNode::bestMove() {
 }
 
 double TreeNode::ucb(double a, double b, double c) {
-  double C = 1;
+  double C = 0.2;
   return 1 - a / b + C * sqrt(2 * log(c) / b);
 }
 
@@ -122,56 +122,20 @@ void TreeNode::printParameter() {
     ", visitNum: " << this->visitNum <<
     ", moveNum: " << this->moveNum << "\n";
 }
-/*
-void TreeNode::updateValue(double value) {
-  TreeNode *curNode = this->parent;
-  while (curNode) {
-    curNode->rewards += value;
-    curNode->visitNum += 1;
-    value = 1 - value;
-    curNode = curNode->parent;
+
+TreeNode::~TreeNode() {
+  /*
+  for (int i = 0; i < this->moveNum; ++i) {
+    delete this->children[i];
   }
+  */
 }
 
-TreeNode* TreeNode::descendByUCB() {
-  std::vector<int> notVisited;
-  for (int i = moveNum - 1; i >= 0; --i) {
-    if(this->childVisitNum[i] == 0) {
-      notVisited.push_back(i);
-    }
-  }
-  if (notVisited.empty()) {
-    double maxVal = -1e8;
-    int index = 0;
+void TreeNode::deleteTree() {
+  if (this != NULL) {
     for (int i = 0; i < this->moveNum; ++i) {
-      double val = 1 - this->children[i]->rewards / this->children[i]->visitNum
-        + sqrt(2 * log(this->visitNum) / this->children[i]->visitNum);
-      if (val > maxVal) {
-        maxVal = val;
-        index = i;
-      }
+      this->children[i]->deleteTree();
     }
-    return this->children[index];
-  } else {
-    int index = notVisited[rand() % notVisited.size()];
-    std::pair<int, int> move = this->nextMoves[index];
-    Reversi board = this->board;
-    board.makeMove(move.first, move.second);
-    board.turnOver();
-    TreeNode *newNode = new TreeNode(board, this->height + 1, this);
-    this->children[index] = newNode;
-    this->childVisitNum[index] = 1;
-    return newNode;
+    delete this;
   }
 }
-
-void TreeNode::playOneSequence() {
-  TreeNode *curNode = this;
-  while (true) {
-    std::vector<std::pair<int, int> > moves = curNode->getValidMoves();
-    if (moves.empty()) break;
-    curNode = curNode->descendByUCB();
-  }
-  curNode->updateValue(-curNode->rewards);
-}
-*/
