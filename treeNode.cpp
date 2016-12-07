@@ -124,11 +124,6 @@ void TreeNode::printParameter() {
 }
 
 TreeNode::~TreeNode() {
-  /*
-  for (int i = 0; i < this->moveNum; ++i) {
-    delete this->children[i];
-  }
-  */
 }
 
 void TreeNode::deleteTree() {
