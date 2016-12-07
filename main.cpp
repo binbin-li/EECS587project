@@ -1,4 +1,5 @@
 #include <iostream>
+#include <mpi.h>
 #include <math.h>
 #include <time.h>
 #include <iomanip>
@@ -38,12 +39,12 @@ pair<int, int> UCT(Reversi board) {
     nextState->update(reward);
   }
   */
-  int i = 0;
-  while (clock() - startTime < CLOCKS_PER_SEC) {
-    ++i;
+  while (clock() - startTime < 4 * CLOCKS_PER_SEC) {
     TreeNode *nextState = root->treePolicy();
-    double reward = nextState->defaultPolicy();
-    nextState->update(reward);
+    for (int i = 0; i < 100; ++i) {
+      double reward = nextState->defaultPolicy();
+      nextState->update(reward);
+    }
   }
   result = root->bestMove();
   root->deleteTree();
@@ -53,8 +54,6 @@ pair<int, int> UCT(Reversi board) {
 int MC(Reversi board, int player) {
   board.setPlayer(player);
   pair<int, int> move;
-  //board.setBoard();
-  //board.printBoard();
   while (true) {
     vector<pair<int, int> > nextMoves = board.getValidMoves();
     if (nextMoves.empty()) break;
