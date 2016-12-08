@@ -10,8 +10,8 @@
 using namespace std;
 
 double score(double a, double b, double c);
-pair<int, int> UCT(Reversi board, double seconds, int rank, int size);
-int MC(Reversi board, int player, int rank, int size);
+pair<int, int> UCT(Reversi board, int iteration, int rank, int size);
+int MC(Reversi board, int player, int rank, int size, int iteration);
 double ucb(double a, double b, double c);
 int bestIndex(TreeNode *root);
 
@@ -24,25 +24,38 @@ int main() {
 
   Reversi board;
   int count = 0;
-  for (int i = 0; i < 1; ++i) {
-    if (MC(board, -1, rank, size) > 0) ++count;
-    cout << i+1 << ' ' << count << endl;
-  }
+  int iteration = 8000 / size;
+  double startTime = MPI_Wtime();
 
+  for (int i = 0; i < 1; ++i) {
+    if (MC(board, -1, rank, size, iteration) > 0) ++count;
+    if (rank == 0) {
+      cout << i+1 << ' ' << count << endl;
+    }
+  }
+  MPI_Barrier(MPI_COMM_WORLD);
+  if (rank == 0) cout << MPI_Wtime() - startTime << endl;
   MPI_Finalize();
   return 0;
 }
 
-pair<int, int> UCT(Reversi board, double seconds, int rank, int size) {
+pair<int, int> UCT(Reversi board, int iteration, int rank, int size) {
   pair<int, int> result;
   clock_t startTime = clock();
   TreeNode *root = new TreeNode(board, 0, NULL);
   // UCT step
+  for (int round = 0; round < iteration; ++round) {
+    TreeNode *nextState = root->treePolicy();
+    double reward = nextState->defaultPolicy();
+    nextState->update(reward);
+  }
+  /*
   while (clock() - startTime < seconds * CLOCKS_PER_SEC) {
     TreeNode *nextState = root->treePolicy();
     double reward = nextState->defaultPolicy();
     nextState->update(reward);
   }
+  */
   int childrenNum = root->childrenNum;
   if (rank == 0) {
     // Receive data from other proc
@@ -91,20 +104,19 @@ pair<int, int> UCT(Reversi board, double seconds, int rank, int size) {
   return result;
 }
 
-int MC(Reversi board, int player, int rank, int size) {
+int MC(Reversi board, int player, int rank, int size, int iteration) {
   board.setPlayer(player);
   pair<int, int> move;
   while (true) {
     vector<pair<int, int> > nextMoves = board.getValidMoves();
     if (nextMoves.empty()) break;
     if (board.getPlayer() == player) {
-      move = UCT(board, 4, rank, size);
+      move = UCT(board, iteration, rank, size);
     } else {
       move = nextMoves[rand() % nextMoves.size()];
     }
     // Send the next move to other proc
     if (rank == 0) {
-      cout << move.first << ' ' << move.second << endl;
       int sendingMove[2];
       sendingMove[0] = move.first;
       sendingMove[1] = move.second;
@@ -121,7 +133,6 @@ int MC(Reversi board, int player, int rank, int size) {
       move.first = receivingMove[0];
       move.second = receivingMove[1];
     }
-    cout << move.first << ' ' << move.second << endl;
     board.makeMove(move.first, move.second);
     board.turnOver();
   }
@@ -134,7 +145,6 @@ double ucb(double a, double b, double c) {
 }
 
 int bestIndex(TreeNode *root) {
-  cout << "start\n";
   std::vector<TreeNode*> children = root->children;
   double maxReward = -1e8;
   int index = 0;
@@ -146,6 +156,5 @@ int bestIndex(TreeNode *root) {
       index = i;
     }
   }
-  cout << "end\n";
   return index;
 }
