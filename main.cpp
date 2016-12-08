@@ -11,10 +11,10 @@ using namespace std;
 
 double score(double a, double b, double c);
 pair<int, int> UCT(Reversi board, double seconds);
-int MC(Reversi board, int player);
-int rank, size;
+int MC(Reversi board, int player, int rank, int size);
 
 int main() {
+  int rank, size;
   srand(time(NULL));
   MPI_Init(0, 0);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -23,7 +23,7 @@ int main() {
   Reversi board;
   int count = 0;
   for (int i = 0; i < 1; ++i) {
-    if (MC(board, -1) > 0) ++count;
+    if (MC(board, -1, rank, size) > 0) ++count;
     cout << i+1 << ' ' << count << endl;
   }
 
@@ -35,13 +35,27 @@ pair<int, int> UCT(Reversi board, double seconds) {
   pair<int, int> result;
   clock_t startTime = clock();
   TreeNode *root = new TreeNode(board, 0, NULL);
-
+  // Receive the data from other proc
+  /*
   if (rank == 0) {
-    board
-    for (int receiver = 1; receiver < size; ++i) {
-
+    vector<vector<double> > data(size - 1, vector<double>(65));
+    double **data = new double * [size - 1];
+    for (int i = 0; i < size - 1; ++i) {
+      data[i] = new double [65];
     }
+    for (int receiver = 1; receiver < size; ++i) {
+      MPI_Status status;
+      MPI_Recv(data[receiver - 1], 65, MPI_DOUBLE, 1, MPI_COMM_WORLD, &status);
+    }
+    for (int i = 0; i < size - 1; ++i) {
+      delete data[i];
+    }
+    delete [] data;
+  } else {
+    // Send the data to the proc 0
+
   }
+  */
   while (clock() - startTime < seconds * CLOCKS_PER_SEC) {
     TreeNode *nextState = root->treePolicy();
     double reward = nextState->defaultPolicy();
@@ -53,10 +67,9 @@ pair<int, int> UCT(Reversi board, double seconds) {
   return result;
 }
 
-int MC(Reversi board, int player) {
+int MC(Reversi board, int player, int rank, int size) {
   board.setPlayer(player);
   pair<int, int> move;
-  int sendingMove[2];
   while (true) {
     vector<pair<int, int> > nextMoves = board.getValidMoves();
     if (nextMoves.empty()) break;
@@ -67,12 +80,23 @@ int MC(Reversi board, int player) {
     }
     // Send the next move to other proc
     if (rank == 0) {
+      int sendingMove[2];
       sendingMove[0] = move.first;
       sendingMove[1] = move.second;
       for (int receiver = 1; receiver < size; ++receiver) {
-        MPI_Isend()
+        MPI_Request request;
+        MPI_Isend(&sendingMove, 2, MPI_INT, receiver, 0, MPI_COMM_WORLD, &request);
       }
     }
+    else {
+      // Receive the next move from proc 0
+      int receivingMove[2];
+      MPI_Status status;
+      MPI_Recv(&receivingMove, 2, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
+      move.first = receivingMove[0];
+      move.second = receivingMove[1];
+    }
+    cout << move.first << ' ' << move.second << endl;
     board.makeMove(move.first, move.second);
     board.turnOver();
   }
