@@ -6,14 +6,15 @@
 
 class TreeNode {
   private:
-    int height, childrenNum, moveNum;
-    double rewards, visitNum;
     Reversi board;
     TreeNode *parent;
+  public:
+    int height, childrenNum, moveNum;
+    double rewards, visitNum;
     std::vector<TreeNode*> children;
     std::vector<int> childVisitNum;
     std::vector<std::pair<int, int> > nextMoves;
-  public:
+
     TreeNode() {};
     TreeNode(Reversi board, int height, TreeNode *parentNode);
     void update(double reward);
@@ -32,6 +33,7 @@ class TreeNode {
     };
     ~TreeNode();
     void deleteTree();
+    std::vector<double> gatherData(int height);
 };
 
 #endif

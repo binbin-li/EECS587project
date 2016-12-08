@@ -134,3 +134,12 @@ void TreeNode::deleteTree() {
     delete this;
   }
 }
+
+std::vector<double> TreeNode::gatherData(int height) {
+  vector<double> result;
+  result.push_back(visitNum);
+  for (int i = 0; i < childrenNum; ++i) {
+    result.push_back(children[i]->visitNum);
+  }
+  return result;
+}
