@@ -87,7 +87,7 @@ TreeNode* TreeNode::bestChild() {
 std::pair<int, int> TreeNode::bestMove() {
   std::pair<int, int> move;
   TreeNode *child = this->bestChild();
-  for (int i = 0; i < this->children.size(); ++i) {
+  for (int i = 0; i < this->moveNum; ++i) {
     if (child == this->children[i]) {
       return this->nextMoves[i];
     }
@@ -140,6 +140,7 @@ std::vector<double> TreeNode::gatherData(int height) {
   result.push_back(visitNum);
   for (int i = 0; i < childrenNum; ++i) {
     result.push_back(children[i]->visitNum);
+    result.push_back(children[i]->rewards);
   }
   return result;
 }

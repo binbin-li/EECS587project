@@ -10,8 +10,10 @@
 using namespace std;
 
 double score(double a, double b, double c);
-pair<int, int> UCT(Reversi board, double seconds);
+pair<int, int> UCT(Reversi board, double seconds, int rank, int size);
 int MC(Reversi board, int player, int rank, int size);
+double ucb(double a, double b, double c);
+int bestIndex(TreeNode *root);
 
 int main() {
   int rank, size;
@@ -31,38 +33,60 @@ int main() {
   return 0;
 }
 
-pair<int, int> UCT(Reversi board, double seconds) {
+pair<int, int> UCT(Reversi board, double seconds, int rank, int size) {
   pair<int, int> result;
   clock_t startTime = clock();
   TreeNode *root = new TreeNode(board, 0, NULL);
-  // Receive the data from other proc
-  /*
-  if (rank == 0) {
-    vector<vector<double> > data(size - 1, vector<double>(65));
-    double **data = new double * [size - 1];
-    for (int i = 0; i < size - 1; ++i) {
-      data[i] = new double [65];
-    }
-    for (int receiver = 1; receiver < size; ++i) {
-      MPI_Status status;
-      MPI_Recv(data[receiver - 1], 65, MPI_DOUBLE, 1, MPI_COMM_WORLD, &status);
-    }
-    for (int i = 0; i < size - 1; ++i) {
-      delete data[i];
-    }
-    delete [] data;
-  } else {
-    // Send the data to the proc 0
-
-  }
-  */
+  // UCT step
   while (clock() - startTime < seconds * CLOCKS_PER_SEC) {
     TreeNode *nextState = root->treePolicy();
     double reward = nextState->defaultPolicy();
     nextState->update(reward);
   }
-  result = root->bestMove();
-  root->gatherData(0);
+  int childrenNum = root->childrenNum;
+  if (rank == 0) {
+    // Receive data from other proc
+    vector<vector<double> > data(size - 1, vector<double>(childrenNum * 2 + 1));
+    for (int receiver = 1; receiver < size; ++receiver) {
+      MPI_Status status;
+      MPI_Recv(&data[receiver - 1].front(), childrenNum * 2 + 1,
+          MPI_DOUBLE, receiver, 1, MPI_COMM_WORLD, &status);
+    }
+    // Average data
+    double sum = root->visitNum;
+    for (int i = 0; i < size - 1; ++i) {
+      sum += data[i][0];
+    }
+    for (int i = 1; i < childrenNum * 2 + 1; ++i) {
+      double rewardSum = 0, visitSum = 0;
+      if (i % 2 == 1) {
+        // Sum up visitNum
+        for (int j = 0; j < size - 1; ++j) {
+          visitSum += data[j][i];
+        }
+        visitSum += root->children[(i - 1) / 2]->visitNum;
+        root->children[(i - 1) / 2]->visitNum = visitSum / size;
+      } else {
+        // Sum up reward
+        for (int j = 0; j < size - 1; ++j) {
+          rewardSum += data[j][i];
+        }
+        rewardSum += root->children[i / 2 - 1]->rewards;
+        root->children[i / 2 - 1]->rewards = rewardSum / size;
+      }
+    }
+  } else {
+    // Send data to proc 0
+    vector<double> data = root->gatherData(0);
+    MPI_Request request;
+    MPI_Isend(&data.front(), childrenNum * 2 + 1, MPI_DOUBLE,
+        0, 1, MPI_COMM_WORLD, &request);
+  }
+  if (rank == 0) {
+    // int index = bestIndex(root);
+    // result = root->nextMoves[index];
+    result = root->bestMove();
+  }
   root->deleteTree();
   return result;
 }
@@ -74,12 +98,13 @@ int MC(Reversi board, int player, int rank, int size) {
     vector<pair<int, int> > nextMoves = board.getValidMoves();
     if (nextMoves.empty()) break;
     if (board.getPlayer() == player) {
-      move = UCT(board, 4);
+      move = UCT(board, 4, rank, size);
     } else {
       move = nextMoves[rand() % nextMoves.size()];
     }
     // Send the next move to other proc
     if (rank == 0) {
+      cout << move.first << ' ' << move.second << endl;
       int sendingMove[2];
       sendingMove[0] = move.first;
       sendingMove[1] = move.second;
@@ -103,3 +128,24 @@ int MC(Reversi board, int player, int rank, int size) {
   return board.getScore(player);
 }
 
+double ucb(double a, double b, double c) {
+  double C = 0.2;
+  return 1 - a / b + C * sqrt(2 * log(c) / b);
+}
+
+int bestIndex(TreeNode *root) {
+  cout << "start\n";
+  std::vector<TreeNode*> children = root->children;
+  double maxReward = -1e8;
+  int index = 0;
+  for (int i = 0; i < root->childrenNum; ++i) {
+    double curReward =
+      ucb(children[i]->rewards, children[i]->visitNum, root->visitNum);
+    if (curReward > maxReward) {
+      maxReward = curReward;
+      index = i;
+    }
+  }
+  cout << "end\n";
+  return index;
+}
