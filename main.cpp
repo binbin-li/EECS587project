@@ -24,7 +24,7 @@ int main() {
 
   Reversi board;
   int count = 0;
-  int iteration = 8000 / size;
+  int iteration = 2000 / size;
   double startTime = MPI_Wtime();
 
   for (int i = 0; i < 1; ++i) {
